@@ -1,9 +1,7 @@
-﻿using Newtonsoft.Json;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
 
 namespace PusherClient
 {
@@ -59,10 +57,17 @@ namespace PusherClient
         private Dictionary<string, dynamic> ParseMembersList(string data)
         {
             Dictionary<string, dynamic> members = new Dictionary<string, dynamic>();
+			return members;
 
-            var dataAsObj = JsonConvert.DeserializeObject<dynamic>(data);
-            
-            for (int i = 0; i < (int)dataAsObj.presence.count; i++)
+			/*
+			Dictionary<string, object> dataAsDict = JsonHelper.Deserialize<Dictionary<string, object>>(data);
+			Dictionary<string, object> presenceDict = (Dictionary<string,object>)dataAsDict[ "presence" ];
+			foreach( KeyValuePair presenceKvp in dataAsDict ) {
+				string 
+				i++;
+			}
+
+			for (int i = 0; i < (int)dataAsObj.presence.count; i++)
             {
                 var id = (string)dataAsObj.presence.ids[i];
                 var val = (dynamic)dataAsObj.presence.hash[id];
@@ -70,16 +75,23 @@ namespace PusherClient
             }
 
             return members;
+			*/
         }
 
         private KeyValuePair<string, dynamic> ParseMember(string data)
         {
-            var dataAsObj = JsonConvert.DeserializeObject<dynamic>(data);
+			/*
+			var dataAsObj = JsonHelper.Deserialize<dynamic>(data);
 
             var id = (string)dataAsObj.user_id;
             var val = (dynamic)dataAsObj.user_info;
 
             return new KeyValuePair<string, dynamic>(id, val);
+            */
+
+			var id = "";
+			var val ="";
+			return new KeyValuePair<string, dynamic>(id, val);
         }
 
         #endregion

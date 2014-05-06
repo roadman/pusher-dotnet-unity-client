@@ -71,8 +71,7 @@ namespace PusherClient
 
         internal void Send(string message)
         {
-            Pusher.Trace.TraceEvent(TraceEventType.Information, 0, "Sending: " + message);
-            UnityEngine.Debug.LogWarning( "PusherConnection sending: " + message );
+			Pusher.Log( "Sending: " + message );
 			_websocket.SendAsync( message, delegate(bool obj) { } );
         }
 
@@ -90,7 +89,7 @@ namespace PusherClient
 
         private void websocket_MessageReceived(object sender, MessageEventArgs e)
         {
-            Pusher.Trace.TraceEvent(TraceEventType.Information, 0, "Websocket message received: " + e.Data);
+			Pusher.Log( "Websocket message received: " + e.Data );
 
 			PusherEventData message = PusherEventData.FromJson( e.Data );
             _pusher.EmitEvent(message.eventName, message.data);
@@ -136,7 +135,7 @@ namespace PusherClient
                             }
                         }
 
-                        Pusher.Trace.TraceEvent(TraceEventType.Warning, 0, "Received a presence event on channel '" + message.channel + "', however there is no presence channel which matches.");
+						Pusher.LogWarning( "Received a presence event on channel '" + message.channel + "', however there is no presence channel which matches." );
                         break;
 
                     case Constants.CHANNEL_MEMBER_REMOVED:
@@ -153,7 +152,7 @@ namespace PusherClient
                             }
                         }
 
-                        Pusher.Trace.TraceEvent(TraceEventType.Warning, 0, "Received a presence event on channel '" + message.channel + "', however there is no presence channel which matches.");
+						Pusher.LogWarning( "Received a presence event on channel '" + message.channel + "', however there is no presence channel which matches." );
                         break;
 
                 }
@@ -170,12 +169,12 @@ namespace PusherClient
 
         private void websocket_Opened(object sender, EventArgs e)
         {
-            Pusher.Trace.TraceEvent(TraceEventType.Information, 0, "Websocket opened OK.");
+			Pusher.Log( "Websocket opened OK." );
         }
 
         private void websocket_Closed(object sender, EventArgs e)
         {
-            Pusher.Trace.TraceEvent(TraceEventType.Warning, 0, "Websocket connection has been closed");
+			Pusher.Log( "Websocket connection has been closed" );
 
             ChangeState(ConnectionState.Disconnected);
 
@@ -186,7 +185,7 @@ namespace PusherClient
         private void websocket_Error(object sender, WebSocketSharp.ErrorEventArgs e)
         {
 			// TODO: What happens here? Do I need to re-connect, or do I just log the issue?
-            Pusher.Trace.TraceEvent(TraceEventType.Error, 0, "Error: " + e.Message);
+			Pusher.LogWarning( "Websocket error: " + e.Message );
         }
 
         private void ParseConnectionEstablished(string data)

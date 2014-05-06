@@ -2,8 +2,6 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
-using Newtonsoft.Json;
 using System.Diagnostics;
 using System.Net;
 
@@ -32,8 +30,14 @@ namespace PusherClient
 
     public class Pusher : EventEmitter
     {
-        // create single TraceSource instance to be used for logging
-        public static TraceSource Trace = new TraceSource("Pusher");
+		public static void Log( string message ) {
+			if( PusherSettings.Verbose )
+				UnityEngine.Debug.Log ( "Pusher: " + message );
+		}
+
+		public static void LogWarning( string message ) {
+			UnityEngine.Debug.LogWarning ( "Pusher: " + message );
+		}
 
         const int PROTOCOL_NUMBER = 5;
         string _applicationKey = null;
@@ -91,13 +95,13 @@ namespace PusherClient
                 switch (_connection.State)
                 {
                     case ConnectionState.Connected:
-                        Trace.TraceEvent(TraceEventType.Warning, 0, "Attempt to connect when connection is already in 'Connected' state. New attempt has been ignored.");
+                        LogWarning("Attempt to connect when connection is already in 'Connected' state. New attempt has been ignored.");
                         break;
                     case ConnectionState.Connecting:
-                        Trace.TraceEvent(TraceEventType.Warning, 0, "Attempt to connect when connection is already in 'Connecting' state. New attempt has been ignored.");
+						LogWarning("Attempt to connect when connection is already in 'Connecting' state. New attempt has been ignored.");
                         break;
                     case ConnectionState.Failed:
-                        Trace.TraceEvent(TraceEventType.Error, 0, "Cannot attempt re-connection once in 'Failed' state");
+                        LogWarning("Cannot attempt re-connection once in 'Failed' state");
                         throw new PusherException("Cannot attempt re-connection once in 'Failed' state", ErrorCodes.ConnectionFailed);
                 }
             }
@@ -110,14 +114,14 @@ namespace PusherClient
             // TODO: Fallback to secure?
 
             string url = String.Format("{0}{1}/app/{2}?protocol={3}&client={4}&version={5}", 
-                scheme, this.Host, _applicationKey, Settings.Default.ProtocolVersion, Settings.Default.ClientName,
-                Settings.Default.VersionNumber);
+                scheme, this.Host, _applicationKey, Pusher.PROTOCOL_NUMBER, PusherSettings.ClientName, PusherSettings.ClientVersion
+			);
 
+			Log( "Connecting to url: '"+url+"'" );
             _connection = new Connection(this, url);
             _connection.Connected += _connection_Connected;
             _connection.ConnectionStateChanged +=_connection_ConnectionStateChanged;
             _connection.Connect();
-            
         }
 
         public void Disconnect()
@@ -128,11 +132,11 @@ namespace PusherClient
         public Channel Subscribe(string channelName)
         {
             if (_connection.State != ConnectionState.Connected)
-                throw new PusherException("You must wait for Pusher to connect before you can subscribe to a channel", ErrorCodes.NotConnected);
+				LogWarning("You must wait for Pusher to connect before you can subscribe to a channel");
 
             if (Channels.ContainsKey(channelName))
             {
-                Trace.TraceEvent(TraceEventType.Warning, 0, "Channel '" + channelName + "' is already subscribed to. Subscription event has been ignored.");
+                LogWarning("Channel '" + channelName + "' is already subscribed to. Subscription event has been ignored.");
                 return Channels[channelName];
             }
 
@@ -166,21 +170,48 @@ namespace PusherClient
 
             if (type == ChannelTypes.Presence || type == ChannelTypes.Private)
             {
-                string jsonAuth = _options.Authorizer.Authorize(channelName, _connection.SocketID);
-
-                var template = new { auth = String.Empty, channel_data = String.Empty };
-                var message = JsonConvert.DeserializeAnonymousType(jsonAuth, template);
-
-                _connection.Send(JsonConvert.SerializeObject(new { @event = Constants.CHANNEL_SUBSCRIBE, data = new { channel = channelName, auth = message.auth, channel_data = message.channel_data } }));
+				Log( "Calling auth for channel for: " + channelName );
+				AuthorizeChannel( channelName );
             }
             else
             {
                 // No need for auth details. Just send subscribe event
-                _connection.Send(JsonConvert.SerializeObject(new { @event = Constants.CHANNEL_SUBSCRIBE, data = new { channel = channelName } }));
+				_connection.Send(JsonHelper.Serialize(new Dictionary<string, object>() {
+					{ "event", Constants.CHANNEL_SUBSCRIBE },
+					{
+						"data", new Dictionary<string,object>() { 
+							{ "channel", channelName }
+						}
+					}
+				}));
             }
 
             return Channels[channelName];
         }
+
+		private void AuthorizeChannel( string channelName ) {
+			string authJson = _options.Authorizer.Authorize( channelName, _connection.SocketID );
+			Log ( "Got replay from server auth: " + authJson );
+			SendChannelAuthData( channelName, authJson );
+		}
+
+		private void SendChannelAuthData( string channelName, string jsonAuth ) {
+			// parse info from json data
+			Dictionary<string,object> authDict = JsonHelper.Deserialize<Dictionary<string,object>>( jsonAuth );
+			string authFromMessage = DataFactoryHelper.GetDictonaryValue( authDict, "auth", string.Empty );
+			string channelDataFromMessage = DataFactoryHelper.GetDictonaryValue( authDict, "channel_data", string.Empty );
+
+			_connection.Send(JsonHelper.Serialize(new Dictionary<string, object>() {
+				{ "event", Constants.CHANNEL_SUBSCRIBE },
+				{
+					"data", new Dictionary<string,object>() { 
+						{ "channel", channelName },
+						{ "auth", authFromMessage },
+						{ "channel_data", channelDataFromMessage }
+					}
+				}
+			}));
+		}
 
         private void AuthEndpointCheck()
         {
@@ -192,7 +223,11 @@ namespace PusherClient
 
         public void Send(string eventName, object data, string channel = null)
         {
-            _connection.Send(JsonConvert.SerializeObject(new { @event = eventName, channel = channel, data = data }));
+			_connection.Send(JsonHelper.Serialize(new Dictionary<string, object>() {
+				{ "event", eventName },
+				{ "data", data },
+				{ "channel", channel }
+			}));
         }
 
         #endregion
@@ -201,12 +236,23 @@ namespace PusherClient
 
         internal void Trigger(string channelName, string eventName, object obj)
         {
-            _connection.Send(JsonConvert.SerializeObject(new { @event = eventName, channel = channelName, data = obj }));
+			_connection.Send(JsonHelper.Serialize(new Dictionary<string, object>() {
+				{ "event", eventName },
+				{ "channel", channelName },
+				{ "data", obj }
+			}));
         }
 
         internal void Unsubscribe(string channelName)
         {
-            _connection.Send(JsonConvert.SerializeObject(new { @event = Constants.CHANNEL_UNSUBSCRIBE, data = new { channel = channelName } }));
+			_connection.Send(JsonHelper.Serialize(new Dictionary<string, object>() {
+				{ "event", Constants.CHANNEL_UNSUBSCRIBE },
+				{
+					"data", new Dictionary<string,object>() { 
+						{ "channel", channelName }
+					}
+				}
+			}));
         }
 
         #endregion
