@@ -6,10 +6,34 @@ It is largely based on the official pusher-dot-net-client library which can be f
 
 More general documentation can be found at <http://pusher.com/docs/>.
 
+## Differences from pusher-dotnet-client
+
+- Uses WebSocketSharp <https://github.com/sta/websocket-sharp> library
+- Uses MiniJSON for JSON parsing <https://gist.github.com/darktable/1411710>
+- Removed nuget support, and C# solution project files
+
 
 ## Installation
 
-TODO
+Import PusherClient.unitypackage file from top level of this repo.
+
+As referenced above, the project requires MiniJSON and websocket-sharp.  If you do not have
+these in your project already then copy contents of UnityClient/Assets/Plugins into your
+project's Plugins folder (should include MiniJSON directory, websocket-sharp.dll)
+
+Example usage below, for a more complete example open the UnityClient folder of this repo
+as a Unity project and look at App.cs
+```
+// app key from pusher settings
+PusherSettings.AppKey = "";
+
+// url to authorization server callback, if connecting to private channels
+PusherSettings.HttpAuthUrl = "";
+
+PusherClient.Pusher pusherClient = new PusherClient.Pusher( PusherSettings.AppKey, opts );
+pusherClient.Connected += HandleConnected;
+pusherClient.Connect();
+```
 
 
 ## License
