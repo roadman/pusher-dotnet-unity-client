@@ -21,8 +21,7 @@ As referenced above, the project requires MiniJSON and websocket-sharp.  If you 
 these in your project already then copy contents of UnityClient/Assets/Plugins into your
 project's Plugins folder (should include MiniJSON directory, websocket-sharp.dll)
 
-Example usage below, for a more complete example open the UnityClient folder of this repo
-as a Unity project and look at App.cs
+Example usage below, for a more complete example see [UnityClient/Assets/Scripts/App.cs](https://github.com/MiketoString/pusher-dotnet-unity-client/blob/master/UnityClient/Assets/Scripts/App.cs)
 ```
 // app key from pusher settings
 PusherSettings.AppKey = "";
