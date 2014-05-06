@@ -1,27 +1,16 @@
-# Pusher .NET Client library
+# Pusher Unity Client library
 
-This is a .NET library for interacting with the Pusher WebSocket API.
+This is a C# library that can be used within Unity for interacting with the Pusher API.
 
-Registering at <http://pusher.com> and use the application credentials within your app as shown below.
+It is largely based on the official pusher-dot-net-client library which can be found here <https://github.com/pusher/pusher-dotnet-client>
 
 More general documentation can be found at <http://pusher.com/docs/>.
 
+
 ## Installation
 
-### NuGet Package
-```
-Install-Package PusherClient -Pre
-```
+TODO
 
-## Publish to NuGet
-
-You should be familiar with [creating an publishing NuGet packages](http://docs.nuget.org/docs/creating-packages/creating-and-publishing-a-package).
-
-From the `pusher-dotnet-client` directory:
-
-1. Update `pusher-dotnet-client.nuspec` with new version number etc.
-2. Run `package.cmd`
-3. Run `tools/nuget.exe push Download/PusherClient.{VERSION}.nupkg'
 
 ## License
 
