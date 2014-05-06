@@ -1,9 +1,7 @@
-﻿using Newtonsoft.Json;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
 
 namespace PusherClient
 {
@@ -33,7 +31,7 @@ namespace PusherClient
 
         internal void EmitEvent(string eventName, string data)
         {
-            var obj = JsonConvert.DeserializeObject<dynamic>(data);
+			var obj = JsonHelper.Deserialize<dynamic>( data );
 
             // Emit to general listeners regardless of event type
             foreach (var action in _generalListeners)
