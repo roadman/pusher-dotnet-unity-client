@@ -14,3 +14,24 @@ build
 *.testsettings
 *.vsmdi
 msbuild.log
+
+
+.DS_Store
+
+# Unity junk files
+TestFlightMobileProvisionCache.xml
+UnityClient/Temp/*
+# Ignore Library/ 
+# http://docs.unity3d.com/Documentation/Manual/ExternalVersionControlSystemSupport.html
+UnityClient/Library/*
+
+# Unity build files (should be localized)
+UnityClient/Assets/Editor/UpdateXcode.scpt
+UnityClient/Assets/Editor/UpdateXcode.scpt.meta
+
+# MonoDevelop files
+UnityClient/*.csproj
+UnityClient/*.pidb
+UnityClient/*.sln
+UnityClient/*.userprefs
+UnityClient/*.unityproj
