@@ -9,6 +9,9 @@ public class PusherSettings
 	// App Key from pusher.com app settings
 	public static string AppKey = "";
 
+	// if true, then connection to pusher will be encrypted
+	public static bool Encrypted = true;
+
 	// if specified, then this will be used as callback url for authorizing connections to private channels
 	public static string HttpAuthUrl = "";
 

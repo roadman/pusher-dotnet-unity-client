@@ -75,14 +75,14 @@ namespace PusherClient
         /// </summary>
         /// <param name="applicationKey">The application key.</param>
         /// <param name="options">The options.</param>
-        public Pusher(string applicationKey, PusherOptions options = null)
+        public Pusher()
         {
-            _applicationKey = applicationKey;
+            _applicationKey = PusherSettings.AppKey;
+			_options = new PusherOptions();
+			_options.Encrypted = PusherSettings.Encrypted;
 
-            if (options == null)
-                _options = new PusherOptions() { Encrypted = false };
-            else
-                _options = options;
+			if( PusherSettings.HttpAuthUrl.Length > 0 )
+				_options.Authorizer = new HttpAuthorizer( PusherSettings.HttpAuthUrl );
         }
 
         #region Public Methods

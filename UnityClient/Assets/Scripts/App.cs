@@ -13,11 +13,7 @@ public class App : MonoBehaviour {
 		PusherSettings.AppKey = "";
 		PusherSettings.HttpAuthUrl = "http://richmond.kingdoms.metamoki.com/bin/pusher-auth.php";
 
-		PusherClient.PusherOptions opts = new PusherClient.PusherOptions();
-		opts.Encrypted = true;
-		opts.Authorizer = new PusherClient.HttpAuthorizer( PusherSettings.HttpAuthUrl );
-
-		pusherClient = new PusherClient.Pusher( PusherSettings.AppKey, opts );
+		pusherClient = new PusherClient.Pusher();
 		pusherClient.Connected += HandleConnected;
 		pusherClient.ConnectionStateChanged += HandleConnectionStateChanged;
 		pusherClient.Connect();
