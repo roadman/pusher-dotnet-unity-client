@@ -1,11 +1,9 @@
-﻿using Newtonsoft.Json;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
-using WebSocket4Net;
+using WebSocketSharp;
 
 namespace PusherClient
 {
@@ -57,13 +55,11 @@ namespace PusherClient
             _allowReconnect = true;
 
             _websocket = new WebSocket(_url);
-            _websocket.EnableAutoSendPing = true;
-            _websocket.AutoSendPingInterval = 1;
-            _websocket.Opened += websocket_Opened;
-            _websocket.Error += websocket_Error;
-            _websocket.Closed += websocket_Closed;
-            _websocket.MessageReceived += websocket_MessageReceived;
-            _websocket.Open();
+			_websocket.OnError += websocket_Error;
+			_websocket.OnOpen += websocket_Opened;
+			_websocket.OnClose += websocket_Closed;
+			_websocket.OnMessage += websocket_MessageReceived;
+			_websocket.ConnectAsync();
         }
 
         internal void Disconnect()
@@ -76,8 +72,8 @@ namespace PusherClient
         internal void Send(string message)
         {
             Pusher.Trace.TraceEvent(TraceEventType.Information, 0, "Sending: " + message);
-            Debug.WriteLine("Sending: " + message);
-            _websocket.Send(message);
+            UnityEngine.Debug.LogWarning( "PusherConnection sending: " + message );
+			_websocket.SendAsync( message, delegate(bool obj) { } );
         }
 
         #endregion
@@ -92,22 +88,17 @@ namespace PusherClient
                 ConnectionStateChanged(this, this._state);
         }
 
-        private void websocket_MessageReceived(object sender, MessageReceivedEventArgs e)
+        private void websocket_MessageReceived(object sender, MessageEventArgs e)
         {
-            Pusher.Trace.TraceEvent(TraceEventType.Information, 0, "Websocket message received: " + e.Message);
+            Pusher.Trace.TraceEvent(TraceEventType.Information, 0, "Websocket message received: " + e.Data);
 
-            Debug.WriteLine(e.Message);
+			PusherEventData message = PusherEventData.FromJson( e.Data );
+            _pusher.EmitEvent(message.eventName, message.data);
 
-
-            var template = new { @event = String.Empty, data = String.Empty, channel = String.Empty };
-            var message = JsonConvert.DeserializeAnonymousType(e.Message, template);
-
-            _pusher.EmitEvent(message.@event, message.data);
-
-            if (message.@event.StartsWith("pusher"))
+            if (message.eventName.StartsWith("pusher"))
             {
                 // Assume Pusher event
-                switch (message.@event)
+                switch (message.eventName)
                 {
                     case Constants.ERROR:
                         ParseError(message.data);
@@ -129,7 +120,7 @@ namespace PusherClient
 
                     case Constants.CHANNEL_SUBSCRIPTION_ERROR:
 
-                        throw new PusherException("Error received on channel subscriptions: " + e.Message, ErrorCodes.SubscriptionError);
+                        throw new PusherException("Error received on channel subscriptions: " + e.Data, ErrorCodes.SubscriptionError);
 
                     case Constants.CHANNEL_MEMBER_ADDED:
 
@@ -171,7 +162,7 @@ namespace PusherClient
             {
                 // Assume channel event
                 if (_pusher.Channels.ContainsKey(message.channel))
-                    _pusher.Channels[message.channel].EmitEvent(message.@event, message.data);
+                    _pusher.Channels[message.channel].EmitEvent(message.eventName, message.data);
             }
 
             
@@ -192,19 +183,17 @@ namespace PusherClient
                 Connect();
         }
 
-        private void websocket_Error(object sender, SuperSocket.ClientEngine.ErrorEventArgs e)
+        private void websocket_Error(object sender, WebSocketSharp.ErrorEventArgs e)
         {
-            Pusher.Trace.TraceEvent(TraceEventType.Error, 0, "Error: " + e.Exception);
-
-            // TODO: What happens here? Do I need to re-connect, or do I just log the issue?
+			// TODO: What happens here? Do I need to re-connect, or do I just log the issue?
+            Pusher.Trace.TraceEvent(TraceEventType.Error, 0, "Error: " + e.Message);
         }
 
         private void ParseConnectionEstablished(string data)
         {
-            var template = new { socket_id = String.Empty };
-            var message = JsonConvert.DeserializeAnonymousType(data, template);
-            _socketId = message.socket_id;
-
+			Dictionary<string,object> dict = JsonHelper.Deserialize<Dictionary<string,object>>( data );
+			_socketId = DataFactoryHelper.GetDictonaryValue( dict, "socket_id", string.Empty );
+            
             ChangeState(ConnectionState.Connected);
 
             if (Connected != null)
@@ -213,15 +202,12 @@ namespace PusherClient
 
         private void ParseError(string data)
         {
-            var template = new { message = String.Empty, code = 0 };
-            var parsed = JsonConvert.DeserializeAnonymousType(data, template);
+			Dictionary<string,object> dict = JsonHelper.Deserialize<Dictionary<string,object>>( data );
+			string message = DataFactoryHelper.GetDictonaryValue( dict, "message", string.Empty );
+			string errorCodeStr = DataFactoryHelper.GetDictonaryValue( dict, "code", ErrorCodes.Unkown.ToString() );
+			ErrorCodes error = DataFactoryHelper.EnumFromString<ErrorCodes>( errorCodeStr );
 
-            ErrorCodes error = ErrorCodes.Unkown;
-
-            if (Enum.IsDefined(typeof(ErrorCodes), parsed.code))
-                error = (ErrorCodes)parsed.code;
-
-            throw new PusherException(parsed.message, error);
+            throw new PusherException(message, error);
         }
 
         #endregion
