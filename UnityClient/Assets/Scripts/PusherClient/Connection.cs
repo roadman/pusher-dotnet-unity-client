@@ -59,6 +59,7 @@ namespace PusherClient
 			_websocket.OnOpen += websocket_Opened;
 			_websocket.OnClose += websocket_Closed;
 			_websocket.OnMessage += websocket_MessageReceived;
+            _websocket.EmitOnPing = true;
 			_websocket.ConnectAsync();
         }
 
@@ -90,6 +91,12 @@ namespace PusherClient
         private void websocket_MessageReceived(object sender, MessageEventArgs e)
         {
 			Pusher.Log( "Websocket message received: " + e.Data );
+
+            if (e.IsPing)
+			{
+				Send("{\"event\": \"pusher:pong\"}");
+				return;
+			}
 
 			PusherEventData message = PusherEventData.FromJson( e.Data );
             _pusher.EmitEvent(message.eventName, message.data);
