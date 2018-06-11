@@ -9,6 +9,9 @@ public class PusherSettings
 	// App Key from pusher.com app settings
 	public static string AppKey = "";
 
+	// ws-[cluster_name].pusher.com
+	public static string Host = "";
+
 	// if true, then connection to pusher will be encrypted
 	public static bool Encrypted = true;
 

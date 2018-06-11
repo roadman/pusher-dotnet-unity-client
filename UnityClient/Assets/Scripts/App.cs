@@ -10,8 +10,8 @@ public class App : MonoBehaviour {
 	void Start () {
 		// TODO: Replace these with your app values
 		PusherSettings.Verbose = true;
-		PusherSettings.AppKey = "";
-		PusherSettings.HttpAuthUrl = "http://richmond.kingdoms.metamoki.com/bin/pusher-auth.php";
+		PusherSettings.AppKey  = "KEY";
+		PusherSettings.Host    = "HOST";   // ws-[CLUSTER].pusher.com
 
 		pusherClient = new PusherClient.Pusher();
 		pusherClient.Connected += HandleConnected;
@@ -21,7 +21,7 @@ public class App : MonoBehaviour {
 
 	void HandleConnected (object sender) {
 		Debug.Log ( "Pusher client connected, now subscribing to private channel" );
-		pusherChannel = pusherClient.Subscribe( "private-testchannel" );
+		pusherChannel = pusherClient.Subscribe( "my-channel" );
 		pusherChannel.BindAll( HandleChannelEvent );
 	}
 
