@@ -6,12 +6,18 @@ public class App : MonoBehaviour {
 	PusherClient.Pusher pusherClient = null;
 	PusherClient.Channel pusherChannel = null;
 
+	public string pusherAppKey;
+	public string pusherCluster;
+	public string pusherSubscribeChannel;
+	public string pusherHttpAuthUrl;
+
 	// Initialize
 	void Start () {
 		// TODO: Replace these with your app values
 		PusherSettings.Verbose = true;
-		PusherSettings.AppKey  = "KEY";
-		PusherSettings.Host    = "HOST";   // ws-[CLUSTER].pusher.com
+		PusherSettings.AppKey  = this.pusherAppKey;
+		PusherSettings.Host    = "ws-" + this.pusherCluster + ".pusher.com";
+		PusherSettings.HttpAuthUrl = this.pusherHttpAuthUrl;
 
 		pusherClient = new PusherClient.Pusher();
 		pusherClient.Connected += HandleConnected;
@@ -21,7 +27,7 @@ public class App : MonoBehaviour {
 
 	void HandleConnected (object sender) {
 		Debug.Log ( "Pusher client connected, now subscribing to private channel" );
-		pusherChannel = pusherClient.Subscribe( "my-channel" );
+		pusherChannel = pusherClient.Subscribe(this.pusherSubscribeChannel);
 		pusherChannel.BindAll( HandleChannelEvent );
 	}
 
