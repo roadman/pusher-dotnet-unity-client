@@ -35,3 +35,5 @@ UnityClient/*.pidb
 UnityClient/*.sln
 UnityClient/*.userprefs
 UnityClient/*.unityproj
+
+.vs
